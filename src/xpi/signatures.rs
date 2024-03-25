@@ -96,7 +96,6 @@ impl fmt::Display for SignatureKind {
 
 #[derive(Default, Serialize)]
 pub struct Signature {
-    pub name: String,
     present: bool,
     pub algorithm: Option<String>,
     certificates: Vec<CertificateInfo>,
@@ -134,8 +133,7 @@ impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}\n   └── {} / {} / {} / {}\n   └── Certificates:",
-            self.name,
+            "   └── {} / {} / {} / {}\n   └── Certificates:",
             if self.present { "PRESENT" } else { "ABSENT" },
             if self.is_staging() {
                 "STAGING"
@@ -210,7 +208,6 @@ impl Signatures {
         }
 
         Signature {
-            name: "PKCS#7".to_string(),
             present: has_pkcs7,
             algorithm: algorithm,
             certificates: certificates,
@@ -238,7 +235,6 @@ impl Signatures {
         }
 
         Signature {
-            name: "COSE".to_string(),
             present: has_cose,
             ..Signature::default()
         }
@@ -247,7 +243,11 @@ impl Signatures {
 
 impl fmt::Display for Signatures {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "SIGNATURES:\n  {}\n  {}", self.pkcs7, self.cose)
+        write!(
+            f,
+            "SIGNATURES:\n  PKCS7:\n{}\n  COSE:\n{}",
+            self.pkcs7, self.cose
+        )
     }
 }
 

@@ -9,7 +9,6 @@ fn assert_pkcs7(
     algorithm: &str,
 ) {
     assert!(signature.exists());
-    assert_eq!("PKCS#7", signature.name);
     assert_eq!(kind, signature.kind());
     assert_eq!(is_staging, signature.is_staging());
     assert_eq!(
