@@ -16,10 +16,11 @@ use const_oid::db::{
     rfc5912::{ID_SHA_1, ID_SHA_256},
 };
 use coset::{CborSerializable, CoseSign, TaggedCborSerializable};
+use serde::Serialize;
 use std::{fmt, io, io::Read};
 use zip::ZipArchive;
 
-#[derive(Default)]
+#[derive(Default, Serialize)]
 struct CertificateInfo {
     common_name: String,
     organizational_unit: String,
@@ -93,7 +94,7 @@ impl fmt::Display for SignatureKind {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize)]
 pub struct Signature {
     pub name: String,
     present: bool,
@@ -151,6 +152,7 @@ impl fmt::Display for Signature {
     }
 }
 
+#[derive(Serialize)]
 pub struct Signatures {
     pub pkcs7: Signature,
     pub cose: Signature,

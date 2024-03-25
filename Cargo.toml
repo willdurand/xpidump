@@ -3,6 +3,9 @@ name = "xpidump"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 clap = { version = "4.5.3", features = ["derive"] }
 cms = "0.2.3"
@@ -10,5 +13,8 @@ const-oid = "0.9.6"
 coset = { git = "https://github.com/willdurand/coset", branch = "moz-cose" }
 hex = "0.4.3"
 json_comments = "0.2.2"
+serde = "1.0.197"
+serde-wasm-bindgen = "0.6.5"
 serde_json = "1.0.114"
-zip = "0.6"
+wasm-bindgen = "0.2.92"
+zip = { version = "0.6", default-features = false, features = ["deflate"] }

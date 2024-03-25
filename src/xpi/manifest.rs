@@ -1,9 +1,10 @@
 use json_comments::StripComments;
+use serde::Serialize;
 use serde_json;
 use std::{fmt, io};
 use zip::ZipArchive;
 
-#[derive(Default)]
+#[derive(Default, Serialize)]
 pub struct Manifest {
     present: bool,
     pub id: Option<String>,
