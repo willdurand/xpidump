@@ -36,7 +36,7 @@ impl XPI {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn is_signed(&self) -> bool {
+    pub fn is_pkcs7_signed(&self) -> bool {
         self.xpi.signatures.pkcs7.exists()
     }
 
@@ -63,5 +63,10 @@ impl XPI {
             xpi::SignatureKind::Privileged => "privileged".to_string(),
             xpi::SignatureKind::System => "system".to_string(),
         }
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn is_cose_signed(&self) -> bool {
+        self.xpi.signatures.cose.exists()
     }
 }
