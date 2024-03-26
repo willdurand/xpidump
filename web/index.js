@@ -11,6 +11,7 @@ const updateUI = (xpi) => {
   }
 
   const {
+    cose_algorithm,
     is_cose_signed,
     is_pkcs7_signed,
     is_staging,
@@ -28,7 +29,7 @@ const updateUI = (xpi) => {
     ✅ ${manifest.id ? `This ${prettyKind} has the following ID in its manifest: <code>${manifest.id}</code>` : `This ${prettyKind} does not have an ID in its manifest`}. Its version is: <code>${manifest.version}</code>.
     <br>
     <br>
-    ${is_pkcs7_signed ? `${is_cose_signed ? "🔐" : "🔓"} It has been signed with the <strong>${is_staging ? "staging" : "production"}</strong> root certificate. The PKCS#7 digest algorithm is: <strong>${pkcs7_algorithm}</strong>. ${is_cose_signed ? "This add-on is dual-signed (PKCS#7 and COSE)" : 'This add-on is <strong>not</strong> signed with COSE'}` : `❌ It doesn't appear to be signed`}.
+    ${is_pkcs7_signed ? `${is_cose_signed ? "🔐" : "🔓"} It has been signed with the <strong>${is_staging ? "staging" : "production"}</strong> root certificate. ${is_cose_signed ? "This add-on is dual-signed (PKCS#7 and COSE)" : "This add-on is <strong>not</strong> signed with COSE"}. The PKCS#7 digest algorithm is: <strong>${pkcs7_algorithm}</strong>. ${is_cose_signed ? `The COSE algorithm is: <strong>${cose_algorithm}</strong>.` : ""}` : `❌ It doesn't appear to be signed.`}
         `;
 
   $outputRaw.textContent = JSON.stringify(

@@ -1,3 +1,4 @@
+mod cose_ish;
 mod manifest;
 mod signatures;
 mod xpi;

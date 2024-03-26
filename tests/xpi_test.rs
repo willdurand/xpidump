@@ -2,7 +2,7 @@ use std::io::Cursor;
 use xpidump::xpi;
 use zip::ZipArchive;
 
-fn assert_pkcs7(
+fn assert_signature(
     signature: xpi::Signature,
     kind: xpi::SignatureKind,
     is_staging: bool,
@@ -11,13 +11,8 @@ fn assert_pkcs7(
     assert!(signature.exists());
     assert_eq!(kind, signature.kind());
     assert_eq!(is_staging, signature.is_staging());
-    assert_eq!(
-        algorithm,
-        signature.algorithm.expect("expect PKCS#7 algorithm")
-    );
+    assert_eq!(algorithm, signature.algorithm.expect("expect algorithm"));
 }
-
-fn assert_cose() {}
 
 #[test]
 fn test_prod_regular_addon() {
@@ -37,11 +32,17 @@ fn test_prod_regular_addon() {
         xpi.manifest.version.expect("expect add-on version")
     );
 
-    assert_pkcs7(
+    assert_signature(
         xpi.signatures.pkcs7,
         xpi::SignatureKind::Regular,
         false,
         "SHA-1",
+    );
+    assert_signature(
+        xpi.signatures.cose,
+        xpi::SignatureKind::Regular,
+        false,
+        "ES256",
     );
 }
 
@@ -57,7 +58,7 @@ fn test_prod_old_regular_addon() {
     assert!(xpi.manifest.id.is_none());
     assert_eq!("3.3", xpi.manifest.version.expect("expect add-on version"));
 
-    assert_pkcs7(
+    assert_signature(
         xpi.signatures.pkcs7,
         xpi::SignatureKind::Regular,
         false,
@@ -84,11 +85,17 @@ fn test_prod_privileged_addon() {
         xpi.manifest.version.expect("expect add-on version")
     );
 
-    assert_pkcs7(
+    assert_signature(
         xpi.signatures.pkcs7,
         xpi::SignatureKind::Privileged,
         false,
         "SHA-256",
+    );
+    assert_signature(
+        xpi.signatures.cose,
+        xpi::SignatureKind::Privileged,
+        false,
+        "ES256",
     );
 }
 
@@ -107,11 +114,17 @@ fn test_staging_regular_addon() {
     );
     assert_eq!("16.0", xpi.manifest.version.expect("expect add-on version"));
 
-    assert_pkcs7(
+    assert_signature(
         xpi.signatures.pkcs7,
         xpi::SignatureKind::Regular,
         true,
         "SHA-1",
+    );
+    assert_signature(
+        xpi.signatures.cose,
+        xpi::SignatureKind::Regular,
+        true,
+        "ES256",
     );
 }
 
@@ -127,12 +140,13 @@ fn test_staging_old_recommended_addon() {
     assert_eq!("alex3@mail.com", xpi.manifest.id.expect("expect add-on ID"));
     assert_eq!("1.1", xpi.manifest.version.expect("expect add-on version"));
 
-    assert_pkcs7(
+    assert_signature(
         xpi.signatures.pkcs7,
         xpi::SignatureKind::Regular,
         true,
         "SHA-1",
     );
+    assert!(xpi.signatures.cose.exists());
 }
 
 #[test]
@@ -153,10 +167,16 @@ fn test_staging_system_addon() {
         xpi.manifest.version.expect("expect add-on version")
     );
 
-    assert_pkcs7(
+    assert_signature(
         xpi.signatures.pkcs7,
         xpi::SignatureKind::System,
         true,
         "SHA-256",
+    );
+    assert_signature(
+        xpi.signatures.cose,
+        xpi::SignatureKind::System,
+        true,
+        "ES256",
     );
 }
