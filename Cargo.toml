@@ -10,8 +10,6 @@ crate-type = ["cdylib", "rlib"]
 clap = { version = "4.5.3", features = ["derive"] }
 cms = "0.2.3"
 const-oid = "0.9.6"
-coset = { git = "https://github.com/willdurand/coset", branch = "moz-cose" }
-hex = "0.4.3"
 json_comments = "0.2.2"
 minicbor = { version = "0.21.0", features = ["half"] }
 serde = "1.0.197"

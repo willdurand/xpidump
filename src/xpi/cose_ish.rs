@@ -16,7 +16,7 @@ pub enum CoseError {
 
 impl From<minicbor::decode::Error> for CoseError {
     fn from(_: minicbor::decode::Error) -> Self {
-        return CoseError::UnexpectedType;
+        CoseError::UnexpectedType
     }
 }
 
@@ -26,7 +26,7 @@ pub struct CoseSign {
 }
 
 impl CoseSign {
-    pub fn new(bytes: &[u8]) -> Result<Self, CoseError> {
+    pub fn parse(bytes: &[u8]) -> Result<Self, CoseError> {
         let mut decoder = Decoder::new(bytes);
 
         if decoder.tag()?.as_u64() != COSE_SIGN_TAG {
@@ -66,7 +66,7 @@ impl CoseSign {
             // Decode all the intermediate certificates.
             for _ in 0..size {
                 let data = dec.bytes()?;
-                if let Ok(cert) = x509_cert::Certificate::from_der(&data) {
+                if let Ok(cert) = x509_cert::Certificate::from_der(data) {
                     certificates.push(cert);
                 }
             }
@@ -99,7 +99,7 @@ impl CoseSign {
             };
 
             let protected = decoder.bytes()?;
-            let mut dec = Decoder::new(&protected);
+            let mut dec = Decoder::new(protected);
             // We expect a map with 2 entries: `alg` and `kid`.
             match dec.map()? {
                 Some(2) => {}
@@ -121,7 +121,7 @@ impl CoseSign {
 
             if dec.int()? == Int::from(COSE_KID) {
                 let data = dec.bytes()?;
-                if let Ok(cert) = x509_cert::Certificate::from_der(&data) {
+                if let Ok(cert) = x509_cert::Certificate::from_der(data) {
                     certificates.push(cert);
                 }
             }
@@ -133,7 +133,7 @@ impl CoseSign {
         }
 
         Ok(CoseSign {
-            algorithm: algorithm,
+            algorithm,
             certificates,
         })
     }

@@ -17,7 +17,7 @@ use const_oid::db::{
     rfc5912::{ID_SHA_1, ID_SHA_256},
 };
 use serde::Serialize;
-use std::convert::{Into, TryInto};
+use std::convert::{From, TryInto};
 use std::{fmt, io, io::Read};
 use x509_cert;
 use zip::ZipArchive;
@@ -44,14 +44,14 @@ impl TryInto<CertificateInfo> for &CertificateChoices {
 
                 let mut common_name = "N/A".to_string();
                 let mut organizational_unit = "N/A".to_string();
-                for (_, rdn) in subject.0.iter().rev().enumerate() {
+                for rdn in subject.0.iter().rev() {
                     if let Some(atv) = rdn.0.get(0) {
                         match atv.oid {
                             COMMON_NAME => {
-                                common_name = atv_to_string(&atv);
+                                common_name = atv_to_string(atv);
                             }
                             ORGANIZATIONAL_UNIT_NAME => {
-                                organizational_unit = atv_to_string(&atv);
+                                organizational_unit = atv_to_string(atv);
                             }
                             _ => {}
                         };
@@ -59,9 +59,8 @@ impl TryInto<CertificateInfo> for &CertificateChoices {
                 }
 
                 Ok(CertificateInfo {
-                    common_name: common_name,
-                    organizational_unit: organizational_unit,
-                    ..CertificateInfo::default()
+                    common_name,
+                    organizational_unit,
                 })
             }
             _ => Err(()),
@@ -69,20 +68,20 @@ impl TryInto<CertificateInfo> for &CertificateChoices {
     }
 }
 
-impl Into<CertificateInfo> for &x509_cert::Certificate {
-    fn into(self) -> CertificateInfo {
-        let subject = &self.tbs_certificate.subject;
+impl From<&x509_cert::Certificate> for CertificateInfo {
+    fn from(value: &x509_cert::Certificate) -> Self {
+        let subject = &value.tbs_certificate.subject;
 
         let mut common_name = "N/A".to_string();
         let mut organizational_unit = "N/A".to_string();
-        for (_, rdn) in subject.0.iter().rev().enumerate() {
+        for rdn in subject.0.iter().rev() {
             if let Some(atv) = rdn.0.get(0) {
                 match atv.oid {
                     COMMON_NAME => {
-                        common_name = atv_to_string(&atv);
+                        common_name = atv_to_string(atv);
                     }
                     ORGANIZATIONAL_UNIT_NAME => {
-                        organizational_unit = atv_to_string(&atv);
+                        organizational_unit = atv_to_string(atv);
                     }
                     _ => {}
                 };
@@ -90,9 +89,8 @@ impl Into<CertificateInfo> for &x509_cert::Certificate {
         }
 
         CertificateInfo {
-            common_name: common_name,
-            organizational_unit: organizational_unit,
-            ..CertificateInfo::default()
+            common_name,
+            organizational_unit,
         }
     }
 }
@@ -199,14 +197,8 @@ impl Signatures {
     }
 
     fn parse_pkcs7<R: io::Read + io::Seek>(archive: &mut ZipArchive<R>) -> Signature {
-        let has_pkcs7_manifest = match archive.by_name("META-INF/manifest.mf") {
-            Ok(_) => true,
-            Err(_) => false,
-        };
-        let has_pkcs7_mozilla = match archive.by_name("META-INF/mozilla.sf") {
-            Ok(_) => true,
-            Err(_) => false,
-        };
+        let has_pkcs7_manifest = archive.by_name("META-INF/manifest.mf").is_ok();
+        let has_pkcs7_mozilla = archive.by_name("META-INF/mozilla.sf").is_ok();
         let maybe_sig_file = archive.by_name("META-INF/mozilla.rsa");
         let has_pkcs7 = has_pkcs7_manifest && has_pkcs7_mozilla && maybe_sig_file.is_ok();
 
@@ -214,20 +206,19 @@ impl Signatures {
         let mut certificates = vec![];
         if let Ok(mut sig_file) = maybe_sig_file {
             let mut buffer = Vec::new();
-            if let Ok(_) = sig_file.read_to_end(&mut buffer) {
+            if sig_file.read_to_end(&mut buffer).is_ok() {
                 let maybe_data = ContentInfo::from_der(&buffer)
                     .and_then(|ci| ci.content.to_der())
                     .and_then(|der| SignedData::from_der(&der));
 
                 if let Ok(data) = maybe_data {
                     if let Some(choices) =
-                        data.certificates.and_then(|certs| Some(certs.0.into_vec()))
+                        data.certificates.map(|certs| certs.0.into_vec())
                     {
                         certificates = choices
                             .iter()
                             .rev()
-                            .map(|choice| choice.try_into())
-                            .flatten()
+                            .flat_map(|choice| choice.try_into())
                             .collect();
                     }
 
@@ -244,18 +235,14 @@ impl Signatures {
 
         Signature {
             present: has_pkcs7,
-            algorithm: algorithm,
-            certificates: certificates,
-            ..Signature::default()
+            algorithm,
+            certificates,
         }
     }
 
     fn parse_cose<R: io::Read + io::Seek>(archive: &mut ZipArchive<R>) -> Signature {
         // COSE
-        let has_cose_manifest = match archive.by_name("META-INF/cose.manifest") {
-            Ok(_) => true,
-            Err(_) => false,
-        };
+        let has_cose_manifest = archive.by_name("META-INF/cose.manifest").is_ok();
         let maybe_sig_file = archive.by_name("META-INF/cose.sig");
         let has_cose = has_cose_manifest && maybe_sig_file.is_ok();
 
@@ -264,7 +251,7 @@ impl Signatures {
         if let Ok(mut sig_file) = maybe_sig_file {
             let mut buffer = Vec::new();
             if sig_file.read_to_end(&mut buffer).is_ok() {
-                if let Ok(cs) = cose_ish::CoseSign::new(&buffer) {
+                if let Ok(cs) = cose_ish::CoseSign::parse(&buffer) {
                     algorithm = Some(cs.algorithm);
                     for c in cs.certificates {
                         certificates.push((&c).into());
@@ -275,9 +262,8 @@ impl Signatures {
 
         Signature {
             present: has_cose,
-            algorithm: algorithm,
-            certificates: certificates,
-            ..Signature::default()
+            algorithm,
+            certificates,
         }
     }
 }
