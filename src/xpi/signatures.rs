@@ -1,3 +1,4 @@
+use super::cose_ish;
 use cms::cert::{
     x509::{
         attr::AttributeTypeAndValue,
@@ -15,9 +16,10 @@ use const_oid::db::{
     rfc4519::{COMMON_NAME, ORGANIZATIONAL_UNIT_NAME},
     rfc5912::{ID_SHA_1, ID_SHA_256},
 };
-use coset::{CborSerializable, CoseSign, TaggedCborSerializable};
 use serde::Serialize;
+use std::convert::{Into, TryInto};
 use std::{fmt, io, io::Read};
+use x509_cert;
 use zip::ZipArchive;
 
 #[derive(Default, Serialize)]
@@ -27,8 +29,16 @@ struct CertificateInfo {
 }
 
 impl CertificateInfo {
-    pub fn from_choices(choices: &CertificateChoices) -> Option<CertificateInfo> {
-        match choices {
+    fn is_staging(&self) -> bool {
+        self.common_name.contains("staging")
+    }
+}
+
+impl TryInto<CertificateInfo> for &CertificateChoices {
+    type Error = ();
+
+    fn try_into(self) -> Result<CertificateInfo, Self::Error> {
+        match self {
             Certificate(cert) => {
                 let subject = &cert.tbs_certificate.subject;
 
@@ -48,18 +58,42 @@ impl CertificateInfo {
                     }
                 }
 
-                Some(CertificateInfo {
+                Ok(CertificateInfo {
                     common_name: common_name,
                     organizational_unit: organizational_unit,
                     ..CertificateInfo::default()
                 })
             }
-            _ => None,
+            _ => Err(()),
         }
     }
+}
 
-    fn is_staging(&self) -> bool {
-        self.common_name.contains("staging")
+impl Into<CertificateInfo> for &x509_cert::Certificate {
+    fn into(self) -> CertificateInfo {
+        let subject = &self.tbs_certificate.subject;
+
+        let mut common_name = "N/A".to_string();
+        let mut organizational_unit = "N/A".to_string();
+        for (_, rdn) in subject.0.iter().rev().enumerate() {
+            if let Some(atv) = rdn.0.get(0) {
+                match atv.oid {
+                    COMMON_NAME => {
+                        common_name = atv_to_string(&atv);
+                    }
+                    ORGANIZATIONAL_UNIT_NAME => {
+                        organizational_unit = atv_to_string(&atv);
+                    }
+                    _ => {}
+                };
+            }
+        }
+
+        CertificateInfo {
+            common_name: common_name,
+            organizational_unit: organizational_unit,
+            ..CertificateInfo::default()
+        }
     }
 }
 
@@ -191,7 +225,8 @@ impl Signatures {
                     {
                         certificates = choices
                             .iter()
-                            .map(|choice| CertificateInfo::from_choices(&choice))
+                            .rev()
+                            .map(|choice| choice.try_into())
                             .flatten()
                             .collect();
                     }
@@ -224,18 +259,24 @@ impl Signatures {
         let maybe_sig_file = archive.by_name("META-INF/cose.sig");
         let has_cose = has_cose_manifest && maybe_sig_file.is_ok();
 
+        let mut algorithm = None;
+        let mut certificates = vec![];
         if let Ok(mut sig_file) = maybe_sig_file {
             let mut buffer = Vec::new();
-            if let Ok(_) = sig_file.read_to_end(&mut buffer) {
-                // TODO: it looks like Mozilla isn't using a correct COSE signature as per
-                // https://github.com/franziskuskiefer/cose-rust/issues/60
-                //
-                // let maybe_data = CoseSign::from_tagged_slice(&buffer).unwrap();
+            if sig_file.read_to_end(&mut buffer).is_ok() {
+                if let Ok(cs) = cose_ish::CoseSign::new(&buffer) {
+                    algorithm = Some(cs.algorithm);
+                    for c in cs.certificates {
+                        certificates.push((&c).into());
+                    }
+                }
             }
         }
 
         Signature {
             present: has_cose,
+            algorithm: algorithm,
+            certificates: certificates,
             ..Signature::default()
         }
     }

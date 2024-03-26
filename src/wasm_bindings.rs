@@ -69,4 +69,15 @@ impl XPI {
     pub fn is_cose_signed(&self) -> bool {
         self.xpi.signatures.cose.exists()
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn cose_algorithm(&self) -> String {
+        self.xpi
+            .signatures
+            .cose
+            .algorithm
+            .as_deref()
+            .unwrap_or("")
+            .to_owned()
+    }
 }
