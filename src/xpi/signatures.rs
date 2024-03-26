@@ -212,9 +212,7 @@ impl Signatures {
                     .and_then(|der| SignedData::from_der(&der));
 
                 if let Ok(data) = maybe_data {
-                    if let Some(choices) =
-                        data.certificates.map(|certs| certs.0.into_vec())
-                    {
+                    if let Some(choices) = data.certificates.map(|certs| certs.0.into_vec()) {
                         certificates = choices
                             .iter()
                             .rev()

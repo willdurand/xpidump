@@ -1,4 +1,4 @@
-use crate::xpi;
+use crate::{xpi, xpi::signatures::SignatureKind};
 use std::io::Cursor;
 use wasm_bindgen::prelude::*;
 use zip::ZipArchive;
@@ -59,9 +59,9 @@ impl XPI {
     #[wasm_bindgen(getter)]
     pub fn kind(&self) -> String {
         match self.xpi.signatures.pkcs7.kind() {
-            xpi::SignatureKind::Regular => "regular".to_string(),
-            xpi::SignatureKind::Privileged => "privileged".to_string(),
-            xpi::SignatureKind::System => "system".to_string(),
+            SignatureKind::Regular => "regular".to_string(),
+            SignatureKind::Privileged => "privileged".to_string(),
+            SignatureKind::System => "system".to_string(),
         }
     }
 

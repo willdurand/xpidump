@@ -33,7 +33,8 @@ impl Manifest {
                             if let Some(gecko) = bss.get("gecko") {
                                 id = gecko
                                     .get("id")
-                                    .and_then(|value| value.as_str()).map(|s| s.to_owned());
+                                    .and_then(|value| value.as_str())
+                                    .map(|s| s.to_owned());
                             }
                         }
 
@@ -42,7 +43,8 @@ impl Manifest {
                             id,
                             version: data
                                 .get("version")
-                                .and_then(|value| value.as_str()).map(|s| s.to_owned()),
+                                .and_then(|value| value.as_str())
+                                .map(|s| s.to_owned()),
                         }
                     }
                     Err(_) => Manifest::default(),

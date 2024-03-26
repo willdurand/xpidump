@@ -1,5 +1,8 @@
-use super::manifest::Manifest;
-use super::signatures::Signatures;
+mod cose_ish;
+mod manifest;
+pub mod signatures;
+
+use crate::xpi::{manifest::Manifest, signatures::Signatures};
 use std::{fmt, io};
 use zip::ZipArchive;
 
