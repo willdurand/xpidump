@@ -10,6 +10,14 @@ fn assert_signature(signature: Signature, kind: SignatureKind, is_staging: bool,
     assert_eq!(kind, signature.kind());
     assert_eq!(is_staging, signature.is_staging());
     assert_eq!(algorithm, signature.algorithm.expect("expect algorithm"));
+
+    let expected_ou = match kind {
+        SignatureKind::Privileged => "Mozilla Extensions",
+        SignatureKind::Regular => "Production",
+        SignatureKind::System => "Mozilla Components",
+    };
+    // The end certificate should contain a deterministic OU.
+    assert_eq!(expected_ou, signature.certificates[1].organizational_unit);
 }
 
 #[test]
@@ -137,4 +145,28 @@ fn test_staging_system_addon() {
 
     assert_signature(xpi.signatures.pkcs7, SignatureKind::System, true, "SHA-256");
     assert_signature(xpi.signatures.cose, SignatureKind::System, true, "ES256");
+}
+
+#[test]
+fn test_long_id() {
+    let bytes = include_bytes!("fixtures/laboratory_by_mozilla-3.0.8.xpi");
+    let reader = Cursor::new(bytes);
+    let mut archive = ZipArchive::new(reader).unwrap();
+
+    let xpi = XPI::new(&mut archive);
+
+    assert!(xpi.manifest.exists());
+    assert_eq!(
+        "1b2383b324c8520974ee097e46301d5ca4e076de387c02886f1c6b1503671586@pokeinthe.io",
+        xpi.manifest.id.expect("expect add-on ID")
+    );
+    // AMO will pass the SHA-256 hash of an add-on ID to Autograph when its length is > 64 chars.
+    assert_eq!(
+        "237aafe39e41ad97721ba6b7d41ca597d0b9d67c54da10c079c3bb7ffc1853b3",
+        xpi.signatures.pkcs7.certificates[1].common_name
+    );
+    assert_eq!(
+        "237aafe39e41ad97721ba6b7d41ca597d0b9d67c54da10c079c3bb7ffc1853b3",
+        xpi.signatures.cose.certificates[1].common_name
+    );
 }

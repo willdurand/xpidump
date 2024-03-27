@@ -1,5 +1,5 @@
 mod cose_ish;
-mod manifest;
+pub mod manifest;
 pub mod signatures;
 
 use crate::xpi::{manifest::Manifest, signatures::Signatures};

@@ -23,9 +23,9 @@ use x509_cert;
 use zip::ZipArchive;
 
 #[derive(Default, Serialize)]
-struct CertificateInfo {
-    common_name: String,
-    organizational_unit: String,
+pub struct CertificateInfo {
+    pub common_name: String,
+    pub organizational_unit: String,
 }
 
 impl CertificateInfo {
@@ -130,7 +130,7 @@ impl fmt::Display for SignatureKind {
 pub struct Signature {
     present: bool,
     pub algorithm: Option<String>,
-    certificates: Vec<CertificateInfo>,
+    pub certificates: Vec<CertificateInfo>,
 }
 
 impl Signature {
