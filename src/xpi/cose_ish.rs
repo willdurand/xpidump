@@ -58,6 +58,8 @@ impl CoseSign {
         };
 
         if dec.int()? == Int::from(COSE_KID) {
+            // Important: this is no RFC 8152 compliant because `kid` should be `bstr`, not an
+            // `array`. See: https://github.com/franziskuskiefer/cose-rust/issues/60
             let size = match dec.array()? {
                 Some(size) => size,
                 None => return Err(CoseError::MalformedInput),
