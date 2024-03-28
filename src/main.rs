@@ -3,7 +3,7 @@ use std::fs;
 use xpidump::xpi;
 use zip::ZipArchive;
 
-/// Simple tool to dump information about XPI files.
+/// A simple tool to dump information about XPI files.
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
