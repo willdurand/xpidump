@@ -22,12 +22,15 @@ A new `xpidump` tool should be available:
 $ xpidump --help
 A simple tool to dump information about XPI files
 
-Usage: xpidump --input <INPUT>
+Usage: xpidump [OPTIONS] <FILE>
+
+Arguments:
+  <FILE>  The path to an XPI file
 
 Options:
-  -i, --input <INPUT>  Input XPI file
-  -h, --help           Print help
-  -V, --version        Print version
+  -f, --format <FORMAT>  [default: text] [possible values: text, json]
+  -h, --help             Print help
+  -V, --version          Print version
 ```
 
 ## Development

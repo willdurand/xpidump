@@ -19,7 +19,7 @@ use const_oid::db::{
 use serde::Serialize;
 use std::convert::{From, TryInto};
 use std::{fmt, io, io::Read};
-use x509_cert;
+
 use zip::ZipArchive;
 
 #[derive(Default, Serialize)]
