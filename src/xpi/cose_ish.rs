@@ -1,7 +1,6 @@
 use minicbor::data::Int;
 use minicbor::decode::Decoder;
 use std::convert::From;
-use x509_cert;
 use x509_cert::der::Decode;
 
 const COSE_SIGN_TAG: u64 = 98;

@@ -1,6 +1,5 @@
 use json_comments::StripComments;
 use serde::Serialize;
-use serde_json;
 use std::{fmt, io};
 use zip::ZipArchive;
 

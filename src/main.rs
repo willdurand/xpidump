@@ -1,26 +1,36 @@
 use clap::Parser;
-use std::fs;
+use std::{fs::File, path::PathBuf};
 use xpidump::XPI;
 use zip::ZipArchive;
 
+#[derive(clap::ValueEnum, Clone)]
+enum Format {
+    Text,
+    Json,
+}
+
 /// A simple tool to dump information about XPI files.
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// Input XPI file
-    #[arg(short, long)]
-    input: String,
+    /// The path to an XPI file
+    file: PathBuf,
+    #[clap(short, long, value_enum, default_value = "text")]
+    format: Format,
 }
 
 fn main() {
     let args = Args::parse();
-
-    let file_name = std::path::Path::new(&args.input);
-    let file = fs::File::open(file_name)
-        .unwrap_or_else(|_| panic!("error: failed to open '{}'", args.input));
+    let file = File::open(args.file).unwrap_or_else(|_| panic!("error: failed to open XPI file"));
     let mut archive =
-        ZipArchive::new(file).unwrap_or_else(|_| panic!("error: failed to read '{}'", args.input));
+        ZipArchive::new(file).unwrap_or_else(|_| panic!("error: failed to read XPI file"));
 
     let xpi = XPI::new(&mut archive);
-    println!("{}", xpi);
+    println!(
+        "{}",
+        match args.format {
+            Format::Json => serde_json::to_string(&xpi).unwrap(),
+            Format::Text => xpi.to_string(),
+        }
+    );
 }
