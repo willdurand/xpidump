@@ -13,7 +13,7 @@ See: https://williamdurand.fr/xpidump/
 Install from GitHub via [cargo][]:
 
 ```
-$ cargo install --git=https://github.com/willdurand/xpidump --features=cli
+cargo install --git=https://github.com/willdurand/xpidump --features=cli
 ```
 
 A new `xpidump` tool should be available:
@@ -36,13 +36,13 @@ Options:
 ## Development
 
 ```
-$ make bootstrap
+make bootstrap
 ```
 
 ### CLI
 
 ```
-$ make cli-dev xpi=<path to a XPI file>
+make cli-dev xpi=<path to a XPI file>
 ```
 
 ### Web App
@@ -50,7 +50,7 @@ $ make cli-dev xpi=<path to a XPI file>
 You can build and run the web app in development mode with the following command:
 
 ```
-$ make dev
+make dev
 ```
 
 ## License
