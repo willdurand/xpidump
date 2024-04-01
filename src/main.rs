@@ -1,6 +1,6 @@
 use clap::Parser;
 use std::fs;
-use xpidump::xpi;
+use xpidump::XPI;
 use zip::ZipArchive;
 
 /// A simple tool to dump information about XPI files.
@@ -21,6 +21,6 @@ fn main() {
     let mut archive =
         ZipArchive::new(file).unwrap_or_else(|_| panic!("error: failed to read '{}'", args.input));
 
-    let xpi = xpi::XPI::new(&mut archive);
+    let xpi = XPI::new(&mut archive);
     println!("{}", xpi);
 }

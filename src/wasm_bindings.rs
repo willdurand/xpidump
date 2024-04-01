@@ -1,11 +1,13 @@
-use crate::{xpi, xpi::signatures::SignatureKind};
+use crate::{SignatureKind, XPI as InnerXPI};
 use std::io::Cursor;
 use wasm_bindgen::prelude::*;
 use zip::ZipArchive;
 
+// This file contains a thin layer to expose the `xpidump` information in a WASM environment.
+
 #[wasm_bindgen]
 pub struct XPI {
-    xpi: xpi::XPI,
+    xpi: InnerXPI,
 }
 
 #[wasm_bindgen]
@@ -16,8 +18,13 @@ impl XPI {
         let mut zip_archive = ZipArchive::new(reader).unwrap();
 
         XPI {
-            xpi: xpi::XPI::new(&mut zip_archive),
+            xpi: InnerXPI::new(&mut zip_archive),
         }
+    }
+
+    #[wasm_bindgen]
+    pub fn to_js(&self) -> JsValue {
+        serde_wasm_bindgen::to_value(&self.xpi).unwrap()
     }
 
     #[wasm_bindgen(getter)]
@@ -26,17 +33,12 @@ impl XPI {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn signatures(&self) -> JsValue {
-        serde_wasm_bindgen::to_value(&self.xpi.signatures).unwrap()
-    }
-
-    #[wasm_bindgen(getter)]
     pub fn has_manifest(&self) -> bool {
         self.xpi.manifest.exists()
     }
 
     #[wasm_bindgen(getter)]
-    pub fn is_pkcs7_signed(&self) -> bool {
+    pub fn has_pkcs7_sig(&self) -> bool {
         self.xpi.signatures.pkcs7.exists()
     }
 
@@ -66,7 +68,7 @@ impl XPI {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn is_cose_signed(&self) -> bool {
+    pub fn has_cose_sig(&self) -> bool {
         self.xpi.signatures.cose.exists()
     }
 

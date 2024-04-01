@@ -4,11 +4,22 @@ A simple tool to dump information about XPI files.
 
 ## Usage
 
+### Web App
+
+See: https://williamdurand.fr/xpidump/
+
 ### CLI
 
+Install from GitHub via [cargo][]:
+
 ```
-$ make release-cli
-$ ./target/release/xpidump --help
+$ cargo install --git=https://github.com/willdurand/xpidump --features=cli
+```
+
+A new `xpidump` tool should be available:
+
+```
+$ xpidump --help
 A simple tool to dump information about XPI files
 
 Usage: xpidump --input <INPUT>
@@ -18,10 +29,6 @@ Options:
   -h, --help           Print help
   -V, --version        Print version
 ```
-
-### Web App
-
-See: https://williamdurand.fr/xpidump/
 
 ## Development
 
@@ -46,3 +53,5 @@ $ make dev
 ## License
 
 xpidump is released under the MIT License. See the bundled [LICENSE](./LICENSE) file for details.
+
+[cargo]: https://doc.rust-lang.org/cargo/

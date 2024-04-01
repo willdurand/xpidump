@@ -26,7 +26,7 @@ pub struct CoseSign {
 }
 
 impl CoseSign {
-    pub fn parse(bytes: &[u8]) -> Result<Self, CoseError> {
+    pub(crate) fn parse(bytes: &[u8]) -> Result<Self, CoseError> {
         let mut decoder = Decoder::new(bytes);
 
         if decoder.tag()?.as_u64() != COSE_SIGN_TAG {

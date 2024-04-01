@@ -12,8 +12,8 @@ const updateUI = (xpi) => {
 
   const {
     cose_algorithm,
-    is_cose_signed,
-    is_pkcs7_signed,
+    has_cose_sig,
+    has_pkcs7_sig,
     is_staging,
     kind,
     manifest,
@@ -21,7 +21,7 @@ const updateUI = (xpi) => {
   } = xpi;
 
   // We don't know what kind of add-on we are looking at when it is not signed.
-  const prettyKind = is_pkcs7_signed
+  const prettyKind = has_pkcs7_sig
     ? `<strong>${kind}</strong> add-on`
     : "add-on";
 
@@ -29,17 +29,10 @@ const updateUI = (xpi) => {
     ✅ ${manifest.id ? `This ${prettyKind} has the following ID in its manifest: <code>${manifest.id}</code>` : `This ${prettyKind} does not have an ID in its manifest`}. Its version is: <code>${manifest.version}</code>.
     <br>
     <br>
-    ${is_pkcs7_signed ? `${is_cose_signed ? "🔐" : "🔓"} It has been signed with the <strong>${is_staging ? "staging" : "production"}</strong> root certificate. ${is_cose_signed ? "This add-on is dual-signed (PKCS#7 and COSE)" : "This add-on is <strong>not</strong> signed with COSE"}. The PKCS#7 digest algorithm is: <strong>${pkcs7_algorithm}</strong>. ${is_cose_signed ? `The COSE algorithm is: <strong>${cose_algorithm}</strong>.` : ""}` : `❌ It doesn't appear to be signed.`}
+    ${has_pkcs7_sig ? `${has_cose_sig ? "🔐" : "🔓"} It has been signed with the <strong>${is_staging ? "staging" : "production"}</strong> root certificate. ${has_cose_sig ? "This add-on is dual-signed (PKCS#7 and COSE)" : "This add-on is <strong>not</strong> signed with COSE"}. The PKCS#7 digest algorithm is: <strong>${pkcs7_algorithm}</strong>. ${has_cose_sig ? `The COSE algorithm is: <strong>${cose_algorithm}</strong>.` : ""}` : `❌ It doesn't appear to be signed.`}
         `;
 
-  $outputRaw.textContent = JSON.stringify(
-    {
-      manifest: xpi.manifest,
-      signatures: xpi.signatures,
-    },
-    null,
-    2,
-  );
+  $outputRaw.textContent = JSON.stringify(xpi.to_js(), null, 2);
 };
 
 document.getElementById("input-file").addEventListener(
