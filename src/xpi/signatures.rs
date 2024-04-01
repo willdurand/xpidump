@@ -23,6 +23,7 @@ use x509_cert;
 use zip::ZipArchive;
 
 #[derive(Default, Serialize)]
+/// Represents some of the information found in a certificate.
 pub struct CertificateInfo {
     pub common_name: String,
     pub organizational_unit: String,
@@ -106,9 +107,13 @@ impl fmt::Display for CertificateInfo {
 }
 
 #[derive(Debug, PartialEq)]
+/// Represents the kind of signature found in the XPI.
 pub enum SignatureKind {
+    /// The XPI has been signed as a regular add-on.
     Regular,
+    /// The XPI has been signed as a privileged add-on.
     Privileged,
+    /// The XPI has been signed as a system add-on.
     System,
 }
 
@@ -127,6 +132,7 @@ impl fmt::Display for SignatureKind {
 }
 
 #[derive(Default, Serialize)]
+/// Represents a signature found in an [`XPI`](`crate::XPI`).
 pub struct Signature {
     present: bool,
     pub algorithm: Option<String>,
@@ -183,16 +189,24 @@ impl fmt::Display for Signature {
 }
 
 #[derive(Serialize)]
+/// Represents the set of signatures possibly found in an [`XPI`](`crate::XPI`) file.
 pub struct Signatures {
+    /// A PKCS#7 signature.
     pub pkcs7: Signature,
+    /// A COSEish signature.
     pub cose: Signature,
 }
 
 impl Signatures {
-    pub fn parse<R: io::Read + io::Seek>(archive: &mut ZipArchive<R>) -> Signatures {
+    /// Whether there is at least one signature found in the [`XPI`](`crate::XPI`) file.
+    pub fn has_signatures(&self) -> bool {
+        self.pkcs7.exists() || self.cose.exists()
+    }
+
+    pub(crate) fn parse<R: io::Read + io::Seek>(archive: &mut ZipArchive<R>) -> Signatures {
         Signatures {
-            pkcs7: self::Signatures::parse_pkcs7(archive),
-            cose: self::Signatures::parse_cose(archive),
+            pkcs7: Signatures::parse_pkcs7(archive),
+            cose: Signatures::parse_cose(archive),
         }
     }
 
