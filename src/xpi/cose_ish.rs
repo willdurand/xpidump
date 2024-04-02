@@ -1,7 +1,7 @@
+use cms::cert::x509::{der::Decode, Certificate};
 use minicbor::data::Int;
 use minicbor::decode::Decoder;
 use std::convert::From;
-use x509_cert::der::Decode;
 
 const COSE_SIGN_TAG: u64 = 98;
 const COSE_ALG: u64 = 1;
@@ -21,7 +21,7 @@ impl From<minicbor::decode::Error> for CoseError {
 
 pub struct CoseSign {
     pub algorithm: String,
-    pub certificates: Vec<x509_cert::Certificate>,
+    pub certificates: Vec<Certificate>,
 }
 
 impl CoseSign {
@@ -67,7 +67,7 @@ impl CoseSign {
             // Decode all the intermediate certificates.
             for _ in 0..size {
                 let data = dec.bytes()?;
-                if let Ok(cert) = x509_cert::Certificate::from_der(data) {
+                if let Ok(cert) = Certificate::from_der(data) {
                     certificates.push(cert);
                 }
             }
@@ -122,7 +122,7 @@ impl CoseSign {
 
             if dec.int()? == Int::from(COSE_KID) {
                 let data = dec.bytes()?;
-                if let Ok(cert) = x509_cert::Certificate::from_der(data) {
+                if let Ok(cert) = Certificate::from_der(data) {
                     certificates.push(cert);
                 }
             }

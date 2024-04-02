@@ -185,3 +185,24 @@ fn test_long_id() {
         xpi.signatures.cose.certificates[1].common_name
     );
 }
+
+#[test]
+fn test_unsigned_addon() {
+    let bytes = include_bytes!("fixtures/unsigned.zip");
+    let reader = Cursor::new(bytes);
+    let mut archive = ZipArchive::new(reader).unwrap();
+
+    let xpi = XPI::new(&mut archive);
+
+    assert!(xpi.manifest.exists());
+    assert!(xpi.manifest.id.is_none());
+    assert_eq!(
+        "1.0",
+        xpi.manifest
+            .version
+            .as_ref()
+            .expect("expect add-on version")
+    );
+    assert!(!xpi.is_recommended());
+    assert!(!xpi.signatures.has_signatures());
+}
