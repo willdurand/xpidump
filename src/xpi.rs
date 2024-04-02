@@ -72,7 +72,7 @@ impl XPI {
     }
 
     /// Whether the XPI is a _recommended_ add-on, i.e. it "looks" signed (i.e. it embeds
-    /// signature) and it has a recommendation state.
+    /// signature files) and it has a recommendation state.
     pub fn is_recommended(&self) -> bool {
         self.signatures.has_signatures() && self.recommendation.is_some()
     }
