@@ -5,7 +5,7 @@ use cms::cert::{
         attr::AttributeTypeAndValue,
         certificate::TbsCertificateInner,
         der::{
-            asn1::{GeneralizedTime, PrintableStringRef, TeletexStringRef, UtcTime, Utf8StringRef},
+            asn1::{PrintableStringRef, TeletexStringRef, UtcTime, Utf8StringRef},
             Decode, Encode, Tag, Tagged,
         },
         Certificate,
@@ -33,17 +33,11 @@ impl Date {
             UtcTime::from_unix_duration(duration).expect("failed to make UtcTime"),
         ))
     }
-
-    pub fn generalized_time_from_duration(duration: Duration) -> Self {
-        Date(x509::time::Time::from(
-            GeneralizedTime::from_unix_duration(duration).expect("failed to make GeneralizedTime"),
-        ))
-    }
 }
 
 impl Default for Date {
     fn default() -> Self {
-        Date::generalized_time_from_duration(Duration::ZERO)
+        Date::utc_time_from_duration(Duration::ZERO)
     }
 }
 
