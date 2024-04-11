@@ -4,7 +4,7 @@ use cms::cert::{
         attr::AttributeTypeAndValue,
         certificate::TbsCertificateInner,
         der::{
-            asn1::{PrintableStringRef, Utf8StringRef},
+            asn1::{PrintableStringRef, TeletexStringRef, Utf8StringRef},
             Decode, Encode, Tag, Tagged,
         },
         Certificate,
@@ -290,6 +290,10 @@ fn atv_to_string(atv: &AttributeTypeAndValue) -> String {
             .as_str()
             .to_owned(),
         Tag::Utf8String => Utf8StringRef::try_from(&atv.value)
+            .unwrap()
+            .as_str()
+            .to_owned(),
+        Tag::TeletexString => TeletexStringRef::try_from(&atv.value)
             .unwrap()
             .as_str()
             .to_owned(),
