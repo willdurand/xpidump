@@ -1,5 +1,6 @@
 use std::io::Cursor;
-use xpidump::{RecommendationState, Signature, SignatureKind, XPI};
+use std::time::Duration;
+use xpidump::{Date, RecommendationState, Signature, SignatureKind, XPI};
 use zip::ZipArchive;
 
 fn assert_signature(signature: &Signature, kind: SignatureKind, is_staging: bool, algorithm: &str) {
@@ -45,7 +46,16 @@ fn test_prod_regular_addon() {
         false,
         "SHA-1",
     );
+    assert_eq!(
+        Date::utc_time_from_duration(Duration::from_secs(1743724800)),
+        xpi.signatures.pkcs7.certificates[0].end_date
+    );
+
     assert_signature(&xpi.signatures.cose, SignatureKind::Regular, false, "ES256");
+    assert_eq!(
+        Date::utc_time_from_duration(Duration::from_secs(1743724800)),
+        xpi.signatures.cose.certificates[0].end_date
+    );
 }
 
 #[test]
@@ -71,6 +81,10 @@ fn test_prod_old_regular_addon() {
     assert_eq!(
         "{6AC85730-7D0F-4de0-B3FA-21142DD85326}",
         xpi.signatures.pkcs7.certificates[1].common_name
+    );
+    assert_eq!(
+        Date::utc_time_from_duration(Duration::from_secs(1741996362)),
+        xpi.signatures.pkcs7.certificates[0].end_date
     );
     assert!(!xpi.signatures.cose.exists());
 }
@@ -228,4 +242,44 @@ fn test_unsigned_addon() {
     );
     assert!(!xpi.is_recommended());
     assert!(!xpi.signatures.has_signatures());
+}
+
+#[test]
+fn test_staging_line_extension() {
+    let bytes = include_bytes!("fixtures/line-staging-cas-cur.xpi");
+    let reader = Cursor::new(bytes);
+    let mut archive = ZipArchive::new(reader).unwrap();
+
+    let xpi = XPI::new(&mut archive);
+
+    assert!(xpi.manifest.exists());
+    assert!(xpi.is_recommended());
+    assert_eq!(
+        "{0cdc308b-4c2a-497d-916a-164d602ed358}",
+        xpi.manifest.id.expect("expect add-on ID")
+    );
+    assert_eq!(
+        "109.2",
+        xpi.manifest.version.expect("expect add-on version")
+    );
+
+    assert_signature(&xpi.signatures.pkcs7, SignatureKind::Regular, true, "SHA-1");
+    assert_eq!(
+        Date::utc_time_from_duration(Duration::from_secs(1741910400)),
+        xpi.signatures.pkcs7.certificates[0].end_date
+    );
+    assert_eq!(
+        Date::utc_time_from_duration(Duration::from_secs(2026818980)),
+        xpi.signatures.pkcs7.certificates[1].end_date
+    );
+
+    assert_signature(&xpi.signatures.cose, SignatureKind::Regular, true, "ES256");
+    assert_eq!(
+        Date::utc_time_from_duration(Duration::from_secs(1741910400)),
+        xpi.signatures.cose.certificates[0].end_date
+    );
+    assert_eq!(
+        Date::utc_time_from_duration(Duration::from_secs(2026818980)),
+        xpi.signatures.cose.certificates[1].end_date
+    );
 }

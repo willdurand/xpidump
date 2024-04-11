@@ -1,10 +1,11 @@
 use super::cose_ish::CoseSign;
 use cms::cert::{
+    x509,
     x509::{
         attr::AttributeTypeAndValue,
         certificate::TbsCertificateInner,
         der::{
-            asn1::{PrintableStringRef, TeletexStringRef, Utf8StringRef},
+            asn1::{GeneralizedTime, PrintableStringRef, TeletexStringRef, UtcTime, Utf8StringRef},
             Decode, Encode, Tag, Tagged,
         },
         Certificate,
@@ -17,16 +18,57 @@ use const_oid::db::{
     rfc4519::{COMMON_NAME, ORGANIZATIONAL_UNIT_NAME},
     rfc5912::{ID_SHA_1, ID_SHA_256},
 };
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use std::convert::{From, TryInto};
-use std::{fmt, io, io::Read};
+use std::{fmt, io, io::Read, time::Duration};
 use zip::ZipArchive;
+
+#[derive(Debug, PartialEq)]
+/// Represents a date in a certificate.
+pub struct Date(x509::time::Time);
+
+impl Date {
+    pub fn utc_time_from_duration(duration: Duration) -> Self {
+        Date(x509::time::Time::from(
+            UtcTime::from_unix_duration(duration).expect("failed to make UtcTime"),
+        ))
+    }
+
+    pub fn generalized_time_from_duration(duration: Duration) -> Self {
+        Date(x509::time::Time::from(
+            GeneralizedTime::from_unix_duration(duration).expect("failed to make GeneralizedTime"),
+        ))
+    }
+}
+
+impl Default for Date {
+    fn default() -> Self {
+        Date::generalized_time_from_duration(Duration::ZERO)
+    }
+}
+
+impl Serialize for Date {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let s = format!("{}", self.0);
+        serializer.serialize_str(&s)
+    }
+}
+
+impl fmt::Display for Date {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 #[derive(Default, Serialize)]
 /// Represents some of the information found in a certificate.
 pub struct CertificateInfo {
     pub common_name: String,
     pub organizational_unit: String,
+    pub end_date: Date,
 }
 
 impl CertificateInfo {
@@ -73,6 +115,7 @@ impl From<&TbsCertificateInner> for CertificateInfo {
         CertificateInfo {
             common_name,
             organizational_unit,
+            end_date: Date(tbs_cert.validity.not_after),
         }
     }
 }
@@ -81,8 +124,10 @@ impl fmt::Display for CertificateInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Common Name         (CN): {}\n            Organizational Unit (OU): {}",
-            self.common_name, self.organizational_unit
+            "Common Name         (CN): {}\n            \
+            Organizational Unit (OU): {}\n            \
+            End Date                : {}",
+            self.common_name, self.organizational_unit, self.end_date
         )
     }
 }
