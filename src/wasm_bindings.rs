@@ -1,4 +1,4 @@
-use crate::{SignatureKind, XPI as InnerXPI};
+use crate::{Environment, SignatureKind, XPI as InnerXPI};
 use std::io::Cursor;
 use wasm_bindgen::prelude::*;
 use zip::ZipArchive;
@@ -43,8 +43,12 @@ impl XPI {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn is_staging(&self) -> bool {
-        self.xpi.signatures.pkcs7.is_staging()
+    pub fn env(&self) -> String {
+        match self.xpi.signatures.pkcs7.env() {
+            Environment::Development => "development".to_string(),
+            Environment::Staging => "staging".to_string(),
+            Environment::Production => "production".to_string(),
+        }
     }
 
     #[wasm_bindgen(getter)]

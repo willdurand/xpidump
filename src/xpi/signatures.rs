@@ -57,6 +57,27 @@ impl fmt::Display for Date {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub enum Environment {
+    Development,
+    Staging,
+    Production,
+}
+
+impl fmt::Display for Environment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Environment::Development => "DEVELOPMENT",
+                Environment::Staging => "STAGING",
+                Environment::Production => "PRODUCTION",
+            }
+        )
+    }
+}
+
 #[derive(Default, Serialize)]
 /// Represents some of the information found in a certificate.
 pub struct CertificateInfo {
@@ -66,8 +87,14 @@ pub struct CertificateInfo {
 }
 
 impl CertificateInfo {
-    fn is_staging(&self) -> bool {
-        self.common_name.contains("staging")
+    fn env(&self) -> Environment {
+        if self.common_name.contains("dev.amo.root.ca") {
+            Environment::Development
+        } else if self.common_name.contains("staging") {
+            Environment::Staging
+        } else {
+            Environment::Production
+        }
     }
 }
 
@@ -164,8 +191,8 @@ impl Signature {
         self.present
     }
 
-    pub fn is_staging(&self) -> bool {
-        self.certificates.iter().any(|cert| cert.is_staging())
+    pub fn env(&self) -> Environment {
+        self.certificates[0].env()
     }
 
     pub fn kind(&self) -> SignatureKind {
@@ -193,11 +220,7 @@ impl fmt::Display for Signature {
             f,
             "   └── {} / {} / {} / {}\n   └── Certificates:",
             if self.present { "PRESENT" } else { "ABSENT" },
-            if self.is_staging() {
-                "STAGING"
-            } else {
-                "PRODUCTION"
-            },
+            self.env(),
             self.algorithm.as_deref().unwrap_or("N/A"),
             self.kind(),
         )?;

@@ -1,12 +1,12 @@
 use std::io::Cursor;
 use std::time::Duration;
-use xpidump::{Date, RecommendationState, Signature, SignatureKind, XPI};
+use xpidump::{Date, Environment, RecommendationState, Signature, SignatureKind, XPI};
 use zip::ZipArchive;
 
-fn assert_signature(signature: &Signature, kind: SignatureKind, is_staging: bool, algorithm: &str) {
+fn assert_signature(signature: &Signature, kind: SignatureKind, env: Environment, algorithm: &str) {
     assert!(signature.exists());
     assert_eq!(kind, signature.kind());
-    assert_eq!(is_staging, signature.is_staging());
+    assert_eq!(env, signature.env());
     assert_eq!(
         algorithm,
         signature.algorithm.as_ref().expect("expect algorithm")
@@ -43,7 +43,7 @@ fn test_prod_regular_addon() {
     assert_signature(
         &xpi.signatures.pkcs7,
         SignatureKind::Regular,
-        false,
+        Environment::Production,
         "SHA-1",
     );
     assert_eq!(
@@ -51,7 +51,12 @@ fn test_prod_regular_addon() {
         xpi.signatures.pkcs7.certificates[0].end_date
     );
 
-    assert_signature(&xpi.signatures.cose, SignatureKind::Regular, false, "ES256");
+    assert_signature(
+        &xpi.signatures.cose,
+        SignatureKind::Regular,
+        Environment::Production,
+        "ES256",
+    );
     assert_eq!(
         Date::utc_time_from_duration(Duration::from_secs(1743724800)),
         xpi.signatures.cose.certificates[0].end_date
@@ -74,7 +79,7 @@ fn test_prod_old_regular_addon() {
     assert_signature(
         &xpi.signatures.pkcs7,
         SignatureKind::Regular,
-        false,
+        Environment::Production,
         "SHA-1",
     );
     // Verify TeletexString values.
@@ -111,13 +116,13 @@ fn test_prod_privileged_addon() {
     assert_signature(
         &xpi.signatures.pkcs7,
         SignatureKind::Privileged,
-        false,
+        Environment::Production,
         "SHA-256",
     );
     assert_signature(
         &xpi.signatures.cose,
         SignatureKind::Privileged,
-        false,
+        Environment::Production,
         "ES256",
     );
 }
@@ -138,8 +143,18 @@ fn test_staging_regular_addon() {
     );
     assert_eq!("16.0", xpi.manifest.version.expect("expect add-on version"));
 
-    assert_signature(&xpi.signatures.pkcs7, SignatureKind::Regular, true, "SHA-1");
-    assert_signature(&xpi.signatures.cose, SignatureKind::Regular, true, "ES256");
+    assert_signature(
+        &xpi.signatures.pkcs7,
+        SignatureKind::Regular,
+        Environment::Staging,
+        "SHA-1",
+    );
+    assert_signature(
+        &xpi.signatures.cose,
+        SignatureKind::Regular,
+        Environment::Staging,
+        "ES256",
+    );
 }
 
 #[test]
@@ -162,7 +177,12 @@ fn test_staging_old_recommended_addon() {
     assert_eq!("alex3@mail.com", xpi.manifest.id.expect("expect add-on ID"));
     assert_eq!("1.1", xpi.manifest.version.expect("expect add-on version"));
 
-    assert_signature(&xpi.signatures.pkcs7, SignatureKind::Regular, true, "SHA-1");
+    assert_signature(
+        &xpi.signatures.pkcs7,
+        SignatureKind::Regular,
+        Environment::Staging,
+        "SHA-1",
+    );
     assert!(xpi.signatures.cose.exists());
 }
 
@@ -188,10 +208,15 @@ fn test_staging_system_addon() {
     assert_signature(
         &xpi.signatures.pkcs7,
         SignatureKind::System,
-        true,
+        Environment::Staging,
         "SHA-256",
     );
-    assert_signature(&xpi.signatures.cose, SignatureKind::System, true, "ES256");
+    assert_signature(
+        &xpi.signatures.cose,
+        SignatureKind::System,
+        Environment::Staging,
+        "ES256",
+    );
 }
 
 #[test]
@@ -263,7 +288,12 @@ fn test_staging_line_extension() {
         xpi.manifest.version.expect("expect add-on version")
     );
 
-    assert_signature(&xpi.signatures.pkcs7, SignatureKind::Regular, true, "SHA-1");
+    assert_signature(
+        &xpi.signatures.pkcs7,
+        SignatureKind::Regular,
+        Environment::Staging,
+        "SHA-1",
+    );
     assert_eq!(
         Date::utc_time_from_duration(Duration::from_secs(1741910400)),
         xpi.signatures.pkcs7.certificates[0].end_date
@@ -273,7 +303,12 @@ fn test_staging_line_extension() {
         xpi.signatures.pkcs7.certificates[1].end_date
     );
 
-    assert_signature(&xpi.signatures.cose, SignatureKind::Regular, true, "ES256");
+    assert_signature(
+        &xpi.signatures.cose,
+        SignatureKind::Regular,
+        Environment::Staging,
+        "ES256",
+    );
     assert_eq!(
         Date::utc_time_from_duration(Duration::from_secs(1741910400)),
         xpi.signatures.cose.certificates[0].end_date
@@ -281,5 +316,34 @@ fn test_staging_line_extension() {
     assert_eq!(
         Date::utc_time_from_duration(Duration::from_secs(2026818980)),
         xpi.signatures.cose.certificates[1].end_date
+    );
+}
+
+#[test]
+fn test_amo_localdev() {
+    let bytes = include_bytes!("fixtures/amo-localdev.xpi");
+    let reader = Cursor::new(bytes);
+    let mut archive = ZipArchive::new(reader).unwrap();
+
+    let xpi = XPI::new(&mut archive);
+
+    assert!(xpi.manifest.exists());
+    assert!(!xpi.is_recommended());
+    assert_eq!(
+        "a-test-extension@will.drnd.me",
+        xpi.manifest.id.expect("expect add-on ID")
+    );
+
+    assert_signature(
+        &xpi.signatures.pkcs7,
+        SignatureKind::Regular,
+        Environment::Development,
+        "SHA-1",
+    );
+    assert_signature(
+        &xpi.signatures.cose,
+        SignatureKind::Regular,
+        Environment::Development,
+        "ES256",
     );
 }
