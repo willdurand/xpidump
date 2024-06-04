@@ -58,11 +58,16 @@ impl fmt::Display for Date {
 }
 
 #[derive(Debug, PartialEq)]
+#[derive(Default)]
 pub enum Environment {
+    #[default]
+    Unknown,
     Development,
     Staging,
     Production,
 }
+
+
 
 impl fmt::Display for Environment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -70,6 +75,7 @@ impl fmt::Display for Environment {
             f,
             "{}",
             match self {
+                Environment::Unknown => "UNKNOWN",
                 Environment::Development => "DEVELOPMENT",
                 Environment::Staging => "STAGING",
                 Environment::Production => "PRODUCTION",
@@ -192,7 +198,11 @@ impl Signature {
     }
 
     pub fn env(&self) -> Environment {
-        self.certificates[0].env()
+        if self.exists() {
+            self.certificates[0].env()
+        } else {
+            Environment::Unknown
+        }
     }
 
     pub fn kind(&self) -> SignatureKind {

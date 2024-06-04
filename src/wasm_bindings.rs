@@ -45,6 +45,7 @@ impl XPI {
     #[wasm_bindgen(getter)]
     pub fn env(&self) -> String {
         match self.xpi.signatures.pkcs7.env() {
+            Environment::Unknown => "unknown".to_string(),
             Environment::Development => "development".to_string(),
             Environment::Staging => "staging".to_string(),
             Environment::Production => "production".to_string(),
