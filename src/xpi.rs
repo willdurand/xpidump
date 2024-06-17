@@ -76,6 +76,12 @@ impl XPI {
     pub fn is_recommended(&self) -> bool {
         self.signatures.has_signatures() && self.recommendation.is_some()
     }
+
+    /// Whether the XPI is an _enterprise_ add-on, i.e. it "looks" signed (i.e. it embeds
+    /// signature files) and it has the enterprise flag (property) set in the manifest.
+    pub fn is_enterprise(&self) -> bool {
+        self.signatures.has_signatures() && self.manifest.has_enterprise_flag()
+    }
 }
 
 impl fmt::Display for XPI {

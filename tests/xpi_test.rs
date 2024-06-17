@@ -31,6 +31,7 @@ fn test_prod_regular_addon() {
 
     assert!(xpi.manifest.exists());
     assert!(!xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert_eq!(
         "{db55bb9b-0d9f-407f-9b65-da9dd29c8d32}",
         xpi.manifest.id.expect("expect add-on ID")
@@ -74,6 +75,7 @@ fn test_prod_old_regular_addon() {
     assert!(xpi.manifest.exists());
     assert!(xpi.manifest.id.is_none());
     assert!(!xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert_eq!("3.3", xpi.manifest.version.expect("expect add-on version"));
 
     assert_signature(
@@ -104,6 +106,7 @@ fn test_prod_privileged_addon() {
 
     assert!(xpi.manifest.exists());
     assert!(!xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert_eq!(
         "remote-settings-devtools@mozilla.com",
         xpi.manifest.id.expect("expect add-on ID")
@@ -137,6 +140,7 @@ fn test_staging_regular_addon() {
 
     assert!(xpi.manifest.exists());
     assert!(!xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert_eq!(
         "{c208c857-c691-4c69-bfa9-3c2b04f4a0ec}",
         xpi.manifest.id.expect("expect add-on ID")
@@ -167,6 +171,7 @@ fn test_staging_old_recommended_addon() {
 
     assert!(xpi.manifest.exists());
     assert!(xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert_eq!(
         vec![
             RecommendationState::Recommended,
@@ -196,6 +201,7 @@ fn test_staging_system_addon() {
 
     assert!(xpi.manifest.exists());
     assert!(!xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert_eq!(
         "webcompat@mozilla.org",
         xpi.manifest.id.expect("expect add-on ID")
@@ -229,6 +235,7 @@ fn test_long_id() {
 
     assert!(xpi.manifest.exists());
     assert!(xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert_eq!(
         vec![RecommendationState::Line],
         xpi.recommendation.unwrap().states
@@ -266,6 +273,7 @@ fn test_unsigned_addon() {
             .expect("expect add-on version")
     );
     assert!(!xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert!(!xpi.signatures.has_signatures());
 }
 
@@ -279,6 +287,7 @@ fn test_staging_line_extension() {
 
     assert!(xpi.manifest.exists());
     assert!(xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert_eq!(
         "{0cdc308b-4c2a-497d-916a-164d602ed358}",
         xpi.manifest.id.expect("expect add-on ID")
@@ -329,6 +338,7 @@ fn test_amo_localdev() {
 
     assert!(xpi.manifest.exists());
     assert!(!xpi.is_recommended());
+    assert!(!xpi.is_enterprise());
     assert_eq!(
         "a-test-extension@will.drnd.me",
         xpi.manifest.id.expect("expect add-on ID")
@@ -346,4 +356,16 @@ fn test_amo_localdev() {
         Environment::Development,
         "ES256",
     );
+}
+
+#[test]
+fn test_enterprise() {
+    let bytes = include_bytes!("fixtures/enterprise-dev.xpi");
+    let reader = Cursor::new(bytes);
+    let mut archive = ZipArchive::new(reader).unwrap();
+
+    let xpi = XPI::new(&mut archive);
+
+    assert!(xpi.manifest.exists());
+    assert!(xpi.is_enterprise());
 }
