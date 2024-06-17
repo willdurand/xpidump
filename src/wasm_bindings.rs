@@ -87,4 +87,9 @@ impl XPI {
             .unwrap_or("")
             .to_owned()
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn is_enterprise(&self) -> bool {
+        self.xpi.is_enterprise()
+    }
 }

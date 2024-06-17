@@ -57,8 +57,7 @@ impl fmt::Display for Date {
     }
 }
 
-#[derive(Debug, PartialEq)]
-#[derive(Default)]
+#[derive(Debug, PartialEq, Default)]
 pub enum Environment {
     #[default]
     Unknown,
@@ -66,8 +65,6 @@ pub enum Environment {
     Staging,
     Production,
 }
-
-
 
 impl fmt::Display for Environment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
